@@ -4,9 +4,36 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+import CssBaseline from '@material-ui/core/CssBaseline';
+import { ThemeProvider } from '@material-ui/core/styles';
+import { createMuiTheme } from '@material-ui/core/styles';
+
+
+const theme = createMuiTheme({
+  palette: {
+    primary: {
+      main: '#212121',
+    },
+    secondary: {
+      // main: '#c62828',
+      main: '#baa600',
+    },
+
+    background: {
+      default: "#f2eecb"
+    }
+  },
+});
+
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    
+    <ThemeProvider theme={theme}>
+      <CssBaseline>
+        <App />
+        </CssBaseline>
+      </ThemeProvider>
+    
   </React.StrictMode>,
   document.getElementById('root')
 );
