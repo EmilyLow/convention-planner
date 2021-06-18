@@ -3,7 +3,7 @@ import ScheduleHolder from "./scheduleComp/ScheduleHolder";
 
 
 
-export default function Home() {
+export default function Talks() {
 
     let scheduleId = 2; 
 
