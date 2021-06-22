@@ -20,15 +20,6 @@ import {
   Link,
 } from "react-router-dom";
 
-// Colors
-/*
-["#405191",
-"#724312",
-"#39627e",
-"#3b0032",
-"#002f44"]
-
-*/
 
 
 
@@ -46,22 +37,6 @@ const useStyles = makeStyles( theme => ({
     display: "flex",
     justifyContent: "space-between",
 
-  }),
-  logInSpread: props => ({
-    display: "flex",
-    justifyContent: "center",
-    
-
-  }),
-  tabSpread: props => ({
-    display: "flex",
-    justifyContent: "flex-end",
-
-    //Check and this is present
-
-  }),
-  divider: props => ({
-    background: theme.palette.secondary.main,
   })
 }));
 
@@ -74,32 +49,54 @@ function App(props) {
 
   const [currentUser, setCurrentUser] = useState({userId: 0, scheduleId: 0, username: 'Guest'});
 
+  
+
   //Setting currentUser from localStorage on load
   //Possibly this should be done in useState intializing 
   //TODO, update for context
   useEffect(() => {
     let storedValue = localStorage.getItem("loggedInUserId");
-    // console.log("Stored value", storedValue);
+  //  console.log("Use effect Stored value", storedValue);
 
 
     if(storedValue != null) {
       confirmCurrentUser(storedValue);
     }
 
+    if(localStorage.guestEvents === undefined) {
+      localStorage.setItem("guestEvents", JSON.stringify([]));
+    }
+    
+
+    //Test changing this. If use 'currentUser' it initiates an infinite loops however
   }, []);
+
+  
 
   //TODO, auth??? Key should still be stored though
   //Should do normal axios or axiosWithAuth though?
   //NOTE! Doing it this way causes a flicker when you refresh. It may be better to store all of this locally to prevent flicker
   function confirmCurrentUser(userId) {
-    axios.get("http://localhost:3002/users/" + userId)
-    .then((res) => {
-      // console.log("COnfirm current user", res);
-      setCurrentUser({id: res.data.id, username: res.data.username, schedule_id: res.data.schedule_id})
-    })
-    .catch((err) => {
-      console.log("Error confirming current user", err);
-    })
+
+
+    let parsedId = parseInt(userId);
+    if(parsedId === 0) {
+     
+      setCurrentUser({userId: 0, scheduleId: 0, username: 'Guest'})
+    } else {
+
+        //Note, does it matter if I use parsed one here?
+        axios.get("http://localhost:3002/users/" + parsedId)
+      .then((res) => {
+        // console.log("COnfirm current user", res);
+        // console.log("confirmCurrentuser res", res.data);
+        setCurrentUser({userId: res.data.id, username: res.data.username, scheduleId: res.data.schedule_id})
+      })
+      .catch((err) => {
+        console.log("Error confirming current user", err);
+      })
+    }
+    
   }
 
   
@@ -109,7 +106,7 @@ function App(props) {
 
 
   return (
-    <UserContext.Provider value={currentUser}>
+    <UserContext.Provider value={{currentUser, setCurrentUser}}>
    <Router>
     <Box>
       <Route path="/"
@@ -119,7 +116,7 @@ function App(props) {
             <MUILink href="/" variant="h6" color="secondary">NecronomiCon</MUILink>
 
             {/* Removed currentUser = here */}
-            <AuthBox setCurrentUser = {setCurrentUser}/>
+            <AuthBox/>
             
           </ToolBar>
     

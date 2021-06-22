@@ -5,22 +5,21 @@ import styled from "styled-components";
 import Schedule from "./Schedule";
 import UserContext from "../utils/UserContext";
 
-import organizeEvents2 from "../utils/organization";
+import organizeEvents from "../utils/organization";
 
-//TODO: Figure out why refreshing temporarily breaks user schedule
-//Okay its doing that because scheduleId is starting as undefined for "Your Schedule"
-//And that's happening because for userschedule, schedule_id comes from context, while its hard defined in the others
+
 
 function ScheduleHolder({scheduleId}) {
 
-  // console.log("Schedule holder for", scheduleId);
-  
- // TODO: Get current schedule object? 
- //Base state of buttons (add/remove) off of schedule objects? 
- //TODO, make it so it only reorganizes user calendar when first getting events?
+
+
+  //TODO: Some of this code was written before guest schedule was always zero, and thus can probably be simplified. 
+
+
 
  const userData = useContext(UserContext);
-//  console.log("Schedule id", scheduleId);
+
+  
 
   const settings = {
     dayNum: 4,
@@ -31,7 +30,9 @@ function ScheduleHolder({scheduleId}) {
  
   const [eventsList, setEventsList] = useState([]);
   const [calendar, setCalendar] = useState({});
-  //personal_schedule
+
+
+
 
   const url = 'http://localhost:3002';
 
@@ -45,28 +46,40 @@ function ScheduleHolder({scheduleId}) {
  
 
   const getCalendar = () => {
- 
+   
+
+    if(scheduleId === 0) {
+      // setCalendar
+      setCalendar({id: 0, schedule_name: "", personal_schedule: 1});
+
+
+      // Temp, put this somewhere else conditional on it being undefined.
+      // localStorage.setItem("guestEvents", JSON.stringify([]));
+
+      triggerLoadReorder(true);
+    
+      
+    } else {
     axios.get(url + "/schedules/"  + scheduleId)
     .then((response) => {
 
       setCalendar(response.data);
   
-    
-      
+
       //!!! Temp changed for seed data testing
-      triggerLoadReorder();
+      // triggerLoadReorder(response.data.personal_schedule);
 
 
       //Real version
-      // if (response.data.personal_schedule) {
-      //   triggerLoadReorder();
-      // } else {
-      //   getEvents();
-      // }
+      if (response.data.personal_schedule) {
+        triggerLoadReorder(response.data.personal_schedule);
+      } else {
+        getEvents(response.data.personal_schedule);
+      }
     })
     .catch((err) => {
       console.log("Error retrieving calendar", err);
-    })
+    })}
   }
 
  
@@ -75,93 +88,150 @@ function ScheduleHolder({scheduleId}) {
 
 const getEvents = (personalSchedule) => {
   
-  axios.get(url + "/schedules/" + scheduleId + "/events")
-  .then((response) => {
 
-    setEventsList(convertToDate(response.data));
+  if(userData.currentUser.scheduleId === 0 && personalSchedule) {
 
-  })
-  .catch(error => console.error(`Error: ${error}`))
+    setEventsList(convertToDate(JSON.parse(localStorage.guestEvents)));
+
+  } else {
+
+    axios.get(url + "/schedules/" + scheduleId + "/events")
+    .then((response) => {
+
+      setEventsList(convertToDate(response.data));
+
+    })
+    .catch(error => console.error(`Error: ${error}`))
+
+  }
+
+  
 }
 
- const getWithoutUpdate = async () => {
+ const getWithoutUpdate = async (personalSchedule) => {
 
    let results;
 
-   await axios.get(url + "/schedules/" + scheduleId + "/events")
-   .then((response) => {
+    if(userData.currentUser.scheduleId === 0 && personalSchedule) {
+      
+      results = JSON.parse(localStorage.guestEvents);
+      
+    } else {
 
-    results = response.data;
-   })
-   .catch(error => console.error(`Error: ${error}`))
+      await axios.get(url + "/schedules/" + scheduleId + "/events")
+      .then((response) => {
 
-   return results;
+        results = response.data;
+    
+      })
+      .catch(error => console.error(`Error: ${error}`))
+
+    }
+
+    return results;
  }
 
 
-
- //This creates a promise to update the event, and does not actually update it directly. 
  const updateEvent = (event) => {
    let id = event.id;
+
+
+
+      return axios.put(url + "/events/" + id, event)
+      .then((response) => {
+  
+      })
+      .catch(error => console.error(`Error: ${error}`))
    
 
-  return axios.put(url + "/events/" + id, event)
-   .then((response) => {
 
-   })
-   .catch(error => console.error(`Error: ${error}`))
  }
 
 
  const deleteEvent = (event) => {
 
-   let id = event.id;
+   let eventId = event.id;
 
-   axios.delete(url + "/events/" + id)
-   .then((response) => {
+   let personalScheduleId = userData.currentUser.scheduleId;
+
+   if(personalScheduleId === 0) {
+
+    let indexOfEvent = eventsList.findIndex((i) => {
+     return i.id === event.id
+    
+    });
+    
+
+    let copyList = [...eventsList];
+
+    copyList.splice(indexOfEvent, 1);
+
+    localStorage.setItem("guestEvents", JSON.stringify(copyList));
+  
+
     triggerDeleteReorder(event);
-   })
-   .catch(error => console.error(`Error: ${error}`))
+
+  } else {
+
+
+    axios.delete(url + "/events/" + eventId)
+    .then((response) => {
+      triggerDeleteReorder(event);
+    })
+    .catch(error => console.error(`Error: ${error}`))
+
+  }
  }
 
 
- const  addEvent = (event) => {
+ const addEvent = (event) => {
  
 
-  let personalScheduleId = userData.schedule_id;
 
+  let personalScheduleId = userData.currentUser.scheduleId;
+  console.log("personalScheduleId", personalScheduleId);
 
+ 
+  let formEvent = {
+    event_name: event.event_name,
+    schedule_id: personalScheduleId,
+    speaker: event.speaker,
+    summary: event.description,
+    location: event.location,
+    start_time: event.start_time,
+    end_time: event.end_time,
+    start_col: 0,
+    span: 0,
+    color: event.color
+  };
 
+ 
   if(personalScheduleId === 0) {
-    console.log("Error: Can't add event to guest schedule.");
+ 
+    formEvent = {...formEvent, id: event.id};
+
+    let allEvents = JSON.parse(localStorage.guestEvents);
+  
+    localStorage.setItem("guestEvents", JSON.stringify([...allEvents, formEvent]));
+
+
   } else {
-    let formEvent = {
-      event_name: event.event_name,
-      schedule_id: personalScheduleId,
-      speaker: event.speaker,
-      summary: event.description,
-      location: event.location,
-      start_time: event.start_time,
-      end_time: event.end_time,
-      start_col: 0,
-      span: 0,
-      color: event.color
-    };
+   
+
 
 
     axios.post(url + "/events", formEvent)
-    .then((res) => {})
+    .then((res) => {
+      console.log(res);
+    })
     .catch(error => console.error(`Error: ${error}`))
   }
 }
 
 
-
-  
-
   //Reorganizes all dates
-  function reorganizeAll(unorganizedList) {
-    // console.log("Reorganize all");
+function reorganizeAll(unorganizedList) {
+   
     let startDate = new Date(settings.startDate);
     let allEvents = [];
     for(let i = 0; i <settings.dayNum; i++) {
@@ -170,10 +240,8 @@ const getEvents = (personalSchedule) => {
 
       let eventSubset = getEventsOnDay(unorganizedList, currentDate);
   
-      //ToDo: This is where the change is
-      // let organizedSubset = organizeEvents(eventSubset);
 
-      let organizedSubset = organizeEvents2(eventSubset, i);
+      let organizedSubset = organizeEvents(eventSubset, i);
 
       allEvents = [...allEvents, ...organizedSubset];
     }
@@ -182,45 +250,98 @@ const getEvents = (personalSchedule) => {
   }
 
 
-  async function triggerLoadReorder() {
+  async function triggerLoadReorder(personalSchedule) {
     
-   let allEvents = await getWithoutUpdate();
+    
+   let allEvents = await getWithoutUpdate(personalSchedule);
+  
    let formEvents = convertToDate(allEvents);
+
    let organized = reorganizeAll(formEvents);
 
-   let  promises = organized.map(async event => {
+
+   if(scheduleId === 0 && personalSchedule) {
+
+    localStorage.setItem("guestEvents", JSON.stringify(organized));
+    getEvents(personalSchedule);
+
+
+   } else {
+
+    let  promises = organized.map(async event => {
  
       return await updateEvent(event);;
     });
 
+    
+
     Promise.all(promises)
       .then(() => {
-        getEvents();
+        getEvents(personalSchedule);
       });
+   }
+
 
   }
+
+
+  async function triggerDeleteReorder(deletedEvent) {
+  
+  
+    if(scheduleId === 0)  {
+
+      
+      let remainingEvents = JSON.parse(localStorage.guestEvents);
+ 
+      let formRemainingEvents = convertToDate(remainingEvents);
+
+      let remainingOnDay = getEventsOnDay(formRemainingEvents, deletedEvent.start_time);
+
+      let dayNum = dateDiff(settings.startDate, deletedEvent.start_time);
+      let organized = organizeEvents(remainingOnDay, dayNum);
+
+
 
  
-  async function triggerDeleteReorder(deletedEvent) {
+      for(let i = 0; i < organized.length; i++) {
+        for(let j = 0; j < formRemainingEvents.length; j++) {
+        
+
+          if(formRemainingEvents[j].id === organized[i].id) {
+           
+            formRemainingEvents[j] = organized[i];
+            break;
+          }
+        }
+      }
+
+      localStorage.setItem("guestEvents", JSON.stringify(formRemainingEvents));
    
-    let remainingEvents =  await getWithoutUpdate();
-    let formRemainingEvents = convertToDate(remainingEvents);
-    
-    let remainingOnDay = getEventsOnDay(formRemainingEvents, deletedEvent.start_time);
+      getEvents(calendar.personal_schedule);
 
-    
-    let organized = organizeEvents(remainingOnDay);
+    } else {
+    //TODO, add input
 
-    let promises = organized.map(async event => {
-      return await updateEvent(event);
-    })
+      let remainingEvents =  await getWithoutUpdate(calendar.personal_schedule);
+      let formRemainingEvents = convertToDate(remainingEvents);
+      
+      let remainingOnDay = getEventsOnDay(formRemainingEvents, deletedEvent.start_time);
+      let dayNum = dateDiff(settings.startDate, deletedEvent.start_time);
+      
+      let organized = organizeEvents(remainingOnDay, dayNum);
 
-    Promise.all(promises)
-    .then(() => {
-      getEvents();
-    })
+      let promises = organized.map(async event => {
+        return await updateEvent(event);
+      })
+
+
+
+      Promise.all(promises)
+      .then(() => {
+        getEvents(calendar.personal_schedule);
+      })
+    }
   }
-
 
 
 const convertToDate = (rawEvents) => {
@@ -239,196 +360,7 @@ const convertToDate = (rawEvents) => {
   return postEvents;
 }
 
-  //Note, assumes all events are on a single day
-  function organizeEvents(rawEvents) {
-   
-   
 
-    
-    if(rawEvents.length === 0) {
-      return [];
-    }
-
-
-   
-    let dayNum = dateDiff(settings.startDate, rawEvents[0].start_time);
-
-    let colOffset = 2;
-    
-    let baseColumn = dayNum * 12 + colOffset;
-
-    let cleanEvents = [];
-    rawEvents.forEach(event => {
-        let newEvent = {...event, start_col: 0, span: 0};
-        cleanEvents.push(newEvent);
-
-    });
-
-    let addedEvents = [];
-
-    for(let i = 0; i < cleanEvents.length; i++) {
-       
-        let intIndex = [];
-        for(let j = 0; j < addedEvents.length; j++) {
-            if(checkTimeInt(cleanEvents[i], addedEvents[j])) {
-                intIndex.push(j);
-            }
-        }
-     
-       
-        
-        //Length of intIndex is the number of intersections
-        if(intIndex.length === 0) {
-            cleanEvents[i].span = 12;
-            cleanEvents[i].start_col = baseColumn;
-            addedEvents.push(cleanEvents[i]);
-        } else {
-            let defaultSpan;
-            if(intIndex.length < 4) {
-              defaultSpan = 12/(intIndex.length +1);
-            } else if (intIndex.length < 6) {
-              defaultSpan = 2;
-            } else if (intIndex.length < 12) {
-              defaultSpan = 1;
-            } else {
-              defaultSpan = 0;
-              console.log("Error: No more than twelve events can intersect.");
-            }
-            
-
-             //Add new event to addedEvents, and add it's index to the list of intersections
-             //Once the current event is added, it is now one of the intersecting events
-             addedEvents.push(cleanEvents[i]);
-             intIndex.push(addedEvents.length-1)
-
-  
-             let slots = new Array(intIndex.length).fill(0);
-           
-             for(let j = 0; j < intIndex.length ; j++) {
-
-               
-                let addedIndex = intIndex[j];
-                //Current intersecting event that is being placed
-                let intEvent = addedEvents[addedIndex];
-
-
-                //Makes the span smaller, but not larger
-                if(!(intEvent.span > 0 && intEvent.span < defaultSpan)) {
-                    intEvent.span = defaultSpan;
-                }
-
-
-              for(let x = 0; x < slots.length; x++) {
-                  if(slots[x] === 0) {
-                      
-                      let blocked = false;
-
-                      let origCol = intEvent.start_col;
-                      intEvent.start_col = baseColumn + x * defaultSpan;
-                  
-                      for(let y = 0; y < addedIndex; y++) {
-                        if(checkPhysicalInt(addedEvents[y], intEvent)) {
-                           blocked = true;
-                        }
-                    }
-                    
-                    if (!blocked) {
-                        //Set slot to full
-                        slots[x] = 1;
-
-                        break;
-                        
-                    } else if (x === slots.length -1) {
-                        console.log("Error, found no open slot for", intEvent.id);
-                     
-                        intEvent.start_col = origCol;
-                    } else {
-                        intEvent.start_col = origCol;
-                    }
-
-                  }
-              }
-            }
-         
-        }
-    }
-    return addedEvents;
-  }
-
-
-
-
-  //This checks for an intersection in grid placement. 
-  function checkPhysicalInt(event1, event2) {
-    let logThis = false;
-    if(event1.id === 234 || event1.id === 235 || event1.id === 236 || event2.id === 234 || event2.id === 235 || event2.id === 236) {
-      logThis = false;
-      // console.log("_____")
-      // console.log("Check physical intersection for: ", event1.id, event2.id);
-    }
-    //Error check
-    if(event1.start_col === 0 || event2.start_col === 0 || event1.span === 0 || event2.span === 0) {
-        console.log("Error! Undefined physical placement");
-    }
-
-    if(checkTimeInt(event1, event2) === false) {
-        if (logThis) console.log("Time intersection false");
-        return false;
-    } else {
-        //Subtracted by 0.1 so shared boundaries don't count as intersection.
-        let end_col1 = event1.start_col + event1.span - 0.1;
-        let end_col2 = event2.start_col + event2.span - 0.1;
-
-        let maxStart = max(event1.start_col, event2.start_col);
-        let minEnd = min(end_col1, end_col2);
-
-        if(maxStart <= minEnd) {
-          if (logThis) console.log("Returns true");
-            return true;
-        } else {
-          if (logThis) console.log("Returns false");
-            return false;
-        }
-    }
-  }
-
-  //This checks for an intersection in time, aka vertical overlap
-  function checkTimeInt(event1, event2) {
-      let maxStart = max(event1.start_time, event2.start_time);
-
-     let end1Copy = new Date(event1.end_time);
-     let end2Copy = new Date(event2.end_time);
-      //Bumping back by one minute in calculations, to prevent intersections when things start and end in same hour
-      //Converted to new Date for readability when logging
-      let altEnd1 = new Date(end1Copy.setMinutes(end1Copy.getMinutes() -1));
-      let altEnd2 = new Date(end2Copy.setMinutes(end2Copy.getMinutes() -1));
-
-      let minEnd = min(altEnd1, altEnd2);
-
-      
-
-      if(maxStart <= minEnd) {
-          return true;
-      } else {
-          return false;
-      }
-  }
-
-  function max(value1, value2) {
-    if(value1 > value2) {
-        return value1;
-    } else {
-        return value2;
-    }
-  }
-
-  function min(value1, value2) {
-    if(value1 < value2) {
-        return value1;
-    } else {
-        return value2;
-    }
-  }
 
   function dateDiff(first, second) {
     let firstCopy = new Date(first);
