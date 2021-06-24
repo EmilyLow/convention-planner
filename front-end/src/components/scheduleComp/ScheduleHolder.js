@@ -1,6 +1,6 @@
 import {useState, useEffect, useContext} from "react";
 import axios from 'axios';
-import styled from "styled-components";
+
 
 import Schedule from "./Schedule";
 import UserContext from "../utils/UserContext";
@@ -9,17 +9,12 @@ import organizeEvents from "../utils/organization";
 
 
 
-function ScheduleHolder({scheduleId}) {
+function ScheduleHolder({scheduleId, sizeMult}) {
 
 
+  const userData = useContext(UserContext);
 
-  //TODO: Some of this code was written before guest schedule was always zero, and thus can probably be simplified. 
-
-
-
- const userData = useContext(UserContext);
-
-  
+  const url = 'http://localhost:3002';
 
   const settings = {
     dayNum: 4,
@@ -33,56 +28,42 @@ function ScheduleHolder({scheduleId}) {
 
 
 
-
-  const url = 'http://localhost:3002';
-
-
   useEffect( () => {
  
     getCalendar();
 
   }, [scheduleId]);
 
- 
 
   const getCalendar = () => {
    
-
     if(scheduleId === 0) {
-      // setCalendar
+
       setCalendar({id: 0, schedule_name: "", personal_schedule: 1});
 
-
-      // Temp, put this somewhere else conditional on it being undefined.
-      // localStorage.setItem("guestEvents", JSON.stringify([]));
-
       triggerLoadReorder(true);
-    
       
     } else {
-    axios.get(url + "/schedules/"  + scheduleId)
-    .then((response) => {
 
-      setCalendar(response.data);
-  
+      axios.get(url + "/schedules/"  + scheduleId)
+      .then((response) => {
 
-      //!!! Temp changed for seed data testing
-      // triggerLoadReorder(response.data.personal_schedule);
+        setCalendar(response.data);
 
+        //Can be used to reset positions of seed data
+        // triggerLoadReorder(response.data.personal_schedule);
 
-      //Real version
-      if (response.data.personal_schedule) {
-        triggerLoadReorder(response.data.personal_schedule);
-      } else {
-        getEvents(response.data.personal_schedule);
-      }
+        if (response.data.personal_schedule) {
+          triggerLoadReorder(response.data.personal_schedule);
+        } else {
+          getEvents(response.data.personal_schedule);
+        }
+
     })
     .catch((err) => {
       console.log("Error retrieving calendar", err);
     })}
   }
-
- 
 
 
 
@@ -104,9 +85,8 @@ const getEvents = (personalSchedule) => {
     .catch(error => console.error(`Error: ${error}`))
 
   }
-
-  
 }
+
 
  const getWithoutUpdate = async (personalSchedule) => {
 
@@ -137,14 +117,12 @@ const getEvents = (personalSchedule) => {
 
 
 
-      return axios.put(url + "/events/" + id, event)
-      .then((response) => {
+   return axios.put(url + "/events/" + id, event)
+          .then((response) => {
   
-      })
-      .catch(error => console.error(`Error: ${error}`))
+          })
+          .catch(error => console.error(`Error: ${error}`))
    
-
-
  }
 
 
@@ -173,7 +151,6 @@ const getEvents = (personalSchedule) => {
 
   } else {
 
-
     axios.delete(url + "/events/" + eventId)
     .then((response) => {
       triggerDeleteReorder(event);
@@ -185,13 +162,9 @@ const getEvents = (personalSchedule) => {
 
 
  const addEvent = (event) => {
- 
-
 
   let personalScheduleId = userData.currentUser.scheduleId;
-  console.log("personalScheduleId", personalScheduleId);
-
- 
+   
   let formEvent = {
     event_name: event.event_name,
     schedule_id: personalScheduleId,
@@ -216,20 +189,16 @@ const getEvents = (personalSchedule) => {
 
 
   } else {
-   
-
 
 
     axios.post(url + "/events", formEvent)
     .then((res) => {
-      console.log(res);
     })
     .catch(error => console.error(`Error: ${error}`))
   }
 }
 
 
-  //Reorganizes all dates
 function reorganizeAll(unorganizedList) {
    
     let startDate = new Date(settings.startDate);
@@ -252,7 +221,6 @@ function reorganizeAll(unorganizedList) {
 
   async function triggerLoadReorder(personalSchedule) {
     
-    
    let allEvents = await getWithoutUpdate(personalSchedule);
   
    let formEvents = convertToDate(allEvents);
@@ -273,8 +241,6 @@ function reorganizeAll(unorganizedList) {
       return await updateEvent(event);;
     });
 
-    
-
     Promise.all(promises)
       .then(() => {
         getEvents(personalSchedule);
@@ -287,10 +253,8 @@ function reorganizeAll(unorganizedList) {
 
   async function triggerDeleteReorder(deletedEvent) {
   
-  
     if(scheduleId === 0)  {
 
-      
       let remainingEvents = JSON.parse(localStorage.guestEvents);
  
       let formRemainingEvents = convertToDate(remainingEvents);
@@ -301,8 +265,6 @@ function reorganizeAll(unorganizedList) {
       let organized = organizeEvents(remainingOnDay, dayNum);
 
 
-
- 
       for(let i = 0; i < organized.length; i++) {
         for(let j = 0; j < formRemainingEvents.length; j++) {
         
@@ -320,7 +282,6 @@ function reorganizeAll(unorganizedList) {
       getEvents(calendar.personal_schedule);
 
     } else {
-    //TODO, add input
 
       let remainingEvents =  await getWithoutUpdate(calendar.personal_schedule);
       let formRemainingEvents = convertToDate(remainingEvents);
@@ -334,15 +295,12 @@ function reorganizeAll(unorganizedList) {
         return await updateEvent(event);
       })
 
-
-
       Promise.all(promises)
       .then(() => {
         getEvents(calendar.personal_schedule);
       })
     }
   }
-
 
 const convertToDate = (rawEvents) => {
   let postEvents = [];
@@ -359,7 +317,6 @@ const convertToDate = (rawEvents) => {
   })
   return postEvents;
 }
-
 
 
   function dateDiff(first, second) {
@@ -379,13 +336,9 @@ const convertToDate = (rawEvents) => {
   let month = targetDate.getMonth();
   let date = targetDate.getDate();
 
-
- //Currently a promise
   let eventsOnDay = [];
 
   rawEvents.forEach(event => {
-   
-
 
       if(event.start_time.getMonth() === month && event.start_time.getDate() === date) {
       
@@ -400,11 +353,9 @@ const convertToDate = (rawEvents) => {
 
 
   return (
-    <LayoutDiv>
-      <ScheduleDiv>
-        <Schedule settings = {settings} eventsList = {eventsList} addEvent = {addEvent} deleteEvent={deleteEvent} personalSchedule={calendar.personal_schedule}/>
-      </ScheduleDiv>
-    </LayoutDiv>
+
+  <Schedule settings = {settings} eventsList = {eventsList} addEvent = {addEvent} deleteEvent={deleteEvent} personalSchedule={calendar.personal_schedule} sizeMult={sizeMult}/>
+
   );
 }
 
@@ -412,17 +363,3 @@ export default ScheduleHolder;
 
 
 
-const ScheduleDiv = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-
-
-const LayoutDiv = styled.div`
-  display: flex;
-  flex-direction: row;
-
-
-`;

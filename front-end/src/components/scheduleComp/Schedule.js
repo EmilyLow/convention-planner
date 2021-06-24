@@ -10,26 +10,7 @@ function Schedule(props) {
 
     let {settings, eventsList, addEvent, deleteEvent, personalSchedule} = props;
 
-    // const eventRef = useRef();
-    // console.log("Schedule ref", eventRef);
- 
-
-const [anchorEl, setAnchorEl] = React.useState(null);
- const [popContents, setPopContents] = React.useState({});
-
-const handleClick = (event, pDetails) => {
-
-    setAnchorEl(event.currentTarget);
-    setPopContents(pDetails);
-};
-
-const handleClose = () => {
-    setAnchorEl(null);
-    setPopContents({});
-};
-
-const open = Boolean(anchorEl);
-const id = open ? "simple-popover" : undefined;
+    let gridBoxWidth = Math.round(20 * props.sizeMult) + 'px';
 
     const days = [
         'Sun',
@@ -40,14 +21,34 @@ const id = open ? "simple-popover" : undefined;
         'Fri',
         'Sat'
     ];
+ 
+
+    const [anchorEl, setAnchorEl] = React.useState(null);
+    const [popContents, setPopContents] = React.useState({});
+
+    const open = Boolean(anchorEl);
+    const id = open ? "simple-popover" : undefined;
+
+    const handleClick = (event, pDetails) => {
+
+        setAnchorEl(event.currentTarget);
+        setPopContents(pDetails);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+        setPopContents({});
+    };
+
 
     
+  
     let hours = [];
 
    
     for (let i = 0; i < settings.dayNum; i++) {
        for (let j = 0; j < settings.hourNum; j++) {
-           //Note! Changing from 0 start to 1 start here.
+
         hours.push(<Hour  key = {"hour" + i + j} day={i} hour={j}/>)
      }
     }
@@ -74,14 +75,11 @@ const id = open ? "simple-popover" : undefined;
 
     for(let i = 0; i < settings.dayNum; i++) {
 
-        
-
         if (i > 0) {
             const currentDate = labelDate.getDate();
             labelDate.setDate(currentDate + 1);
         }
-
-        
+ 
         let  dayNum = labelDate.getDate();
         let  dayString = days[labelDate.getDay()];
 
@@ -93,14 +91,14 @@ const id = open ? "simple-popover" : undefined;
     }  
     return(
         
-        <ScheduleContainer settings={settings} num={3}> 
+        <ScheduleContainer settings={settings} width = {gridBoxWidth} num={3}> 
            
            
             {dayLabels}
             {hourLabels}
             {hours}
              {eventsList.map(listing => { 
-                    return <Event  handleClick = {handleClick} key = {listing.id} details = {listing} settings={settings} deleteEvent = {deleteEvent}/>;
+                    return <Event  handleClick = {handleClick} key = {listing.id} details = {listing} settings={settings}/>;
                  })}
                  <Popover
           id={id}
@@ -134,10 +132,15 @@ export default Schedule;
 
 const ScheduleContainer = styled.div`
     display: grid;
-    grid-template-columns: 50px repeat(calc(12 * ${(props) => props.settings.dayNum}), 16px);
+    grid-template-columns: 50px repeat(calc(12 * ${(props) => props.settings.dayNum}), ${(props) => props.width});
     grid-template-rows: 80px repeat(${(props) => props.settings.hourNum * 4}, 10px);
+  
+    padding-right: 30px;
+    
+   
 
   
+
 `;
 
 const Hour = styled.div`
@@ -181,13 +184,13 @@ const DayLabel = styled.div`
     
 
     background: 
-    linear-gradient(grey, grey)  bottom left / 1px 50% ;
-   background-repeat:no-repeat;
+    linear-gradient(grey, grey)  bottom left / 1px 65% ;
+    background-repeat:no-repeat;
 
-   display: flex;
-   flex-direction: column;
-  justify-content: space-evenly;
-   align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
 
  
 `

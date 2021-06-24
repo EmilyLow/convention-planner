@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
+
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
@@ -15,7 +15,6 @@ const theme = createMuiTheme({
       main: '#212121',
     },
     secondary: {
-      // main: '#c62828',
       main: '#baa600',
     },
 

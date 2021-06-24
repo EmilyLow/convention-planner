@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect} from "react";
+import UserContext from "./components/utils/UserContext";
+
 import '@fontsource/roboto';
 import Box from '@material-ui/core/Box';
 import AppBar from "@material-ui/core/AppBar";
@@ -6,13 +8,10 @@ import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
 import MUILink from "@material-ui/core/Link";
 import ToolBar from "@material-ui/core/Toolbar";
-
-import UserContext from "./components/utils/UserContext";
+import { makeStyles } from '@material-ui/core/styles';
+import useMediaQuery from '@material-ui/core/useMediaQuery';
 
 import axios from "axios";
-
-import { makeStyles } from '@material-ui/core/styles';
-
 import {
   BrowserRouter as Router,
   Switch,
@@ -20,15 +19,8 @@ import {
   Link,
 } from "react-router-dom";
 
-
-
-
 import Home from "./components/Home";
-import Core from "./components/Core";
-import Talks from "./components/Talks";
-import Games from "./components/Games";
-import Shows from "./components/Shows";
-import UserSchedule from "./components/UserSchedule";
+import Page from "./components/Page";
 import AuthBox from "./components/AuthBox";
 
 
@@ -36,27 +28,38 @@ const useStyles = makeStyles( theme => ({
   headerSpread: props => ({
     display: "flex",
     justifyContent: "space-between",
+     [theme.breakpoints.down("xs")]: {
+   
+      padding: '10px',
+      flexDirection: "column",
+    }
+  }),
 
-  })
+  tabs: {
+    
+    [theme.breakpoints.down("xs")]: {
+      marginLeft: "auto",
+      marginRight: "auto",
+    }
+   
+  },
+ 
 }));
 
 function App(props) {
 
-  //TODO Check local storage and useContext
+
 
   const classes = useStyles();
+  const mediumViewport = useMediaQuery('(min-width:600px)');
 
 
   const [currentUser, setCurrentUser] = useState({userId: 0, scheduleId: 0, username: 'Guest'});
 
   
-
-  //Setting currentUser from localStorage on load
-  //Possibly this should be done in useState intializing 
-  //TODO, update for context
   useEffect(() => {
     let storedValue = localStorage.getItem("loggedInUserId");
-  //  console.log("Use effect Stored value", storedValue);
+  
 
 
     if(storedValue != null) {
@@ -68,14 +71,10 @@ function App(props) {
     }
     
 
-    //Test changing this. If use 'currentUser' it initiates an infinite loops however
   }, []);
 
   
 
-  //TODO, auth??? Key should still be stored though
-  //Should do normal axios or axiosWithAuth though?
-  //NOTE! Doing it this way causes a flicker when you refresh. It may be better to store all of this locally to prevent flicker
   function confirmCurrentUser(userId) {
 
 
@@ -85,11 +84,10 @@ function App(props) {
       setCurrentUser({userId: 0, scheduleId: 0, username: 'Guest'})
     } else {
 
-        //Note, does it matter if I use parsed one here?
+
         axios.get("http://localhost:3002/users/" + parsedId)
       .then((res) => {
-        // console.log("COnfirm current user", res);
-        // console.log("confirmCurrentuser res", res.data);
+  
         setCurrentUser({userId: res.data.id, username: res.data.username, scheduleId: res.data.schedule_id})
       })
       .catch((err) => {
@@ -101,31 +99,30 @@ function App(props) {
 
   
 
-
   
 
 
   return (
     <UserContext.Provider value={{currentUser, setCurrentUser}}>
    <Router>
-    <Box>
+    <Box >
       <Route path="/"
         render={(history) => (
         <AppBar position="static" color="primary" >
           <ToolBar className={classes.headerSpread}>
-            <MUILink href="/" variant="h6" color="secondary">NecronomiCon</MUILink>
+            <MUILink href="/" variant="h4" color="secondary">NecronomiCon</MUILink>
 
-            {/* Removed currentUser = here */}
+           
             <AuthBox/>
             
           </ToolBar>
-    
-          <Tabs  centered value={history.location.pathname !== "/" ? history.location.pathname
+          
+          <Tabs   className={classes.tabs} orientation={mediumViewport ? "horizontal" : "vertical"} centered value={history.location.pathname !== "/" ? history.location.pathname
                       : false} color="secondary">
             <Tab label = "Core" value={"/core"} component = {Link} to={"/core"}/>
-            <Tab label = "Talks" value={"/talks"}  component = {Link} to={"/talks"} />
-            <Tab label = "Games" value={"/games"} component = {Link} to={"/games"}/>
             <Tab label = "Shows" value={"/shows"} component = {Link} to={"/shows"}/>
+            <Tab label = "Talks" value={"/talks"}  component = {Link} to={"/talks"} />
+            <Tab label = "Games" value={"/games"} component = {Link} to={"/games"}/> 
             <Tab label = "Your Schedule" value={"/your-schedule"} component = {Link} to={"/your-schedule"}/>
           </Tabs>
         </AppBar>
@@ -134,19 +131,19 @@ function App(props) {
 
       <Switch>
         <Route path = "/core">
-          <Core/>
+          <Page scheduleId={1} sizeMult={1}/>
         </Route>
         <Route path="/talks">
-          <Talks />
+          <Page scheduleId={2} sizeMult={1.5}/>
         </Route>
         <Route path="/games">
-          <Games />
+          <Page scheduleId={3} sizeMult={1.5}/>
         </Route>
         <Route path="/shows">
-          <Shows />
+          <Page scheduleId={4} sizeMult={1}/>
         </Route>
         <Route path = "/your-schedule">
-          <UserSchedule/>
+          <Page scheduleId ={0} sizeMult={1}/>
         </Route>
         <Route path="/">
           <Home />

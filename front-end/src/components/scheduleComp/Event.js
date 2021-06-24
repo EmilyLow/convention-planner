@@ -1,4 +1,3 @@
-import {useRef, useLayoutEffect} from "react";
 import styled from "styled-components";
 import React from "react";
 
@@ -9,31 +8,30 @@ const useStyles = makeStyles((theme) => ({
     typography: {
       padding: theme.spacing(2)
     },
-    color: {
+    label: {
       color: "#FFFAFA",
+      margin: '0px',
+      padding: '4px 2px 1px 2px',
+    
+    
+      fontSize: '14px',
+      textAlign: 'center',
+      width: '100%',
+    
+      wordBreak: 'break-word',
+      overflow: 'hidden',
+      
+    
     },
-    abbreviateStyle: {
+    eventStyle: props => ({
+      backgroundColor: props.backgroundColor,
 
-    },
-    allowOverflowStyle: {
 
-    }
+    }),
   }));
   
 
-function Event({details, settings, deleteEvent, handleClick}) {
-
-  // const eventRef = React.createRef();
-
-
-  // useLayoutEffect(() => {
-  //   // if (eventRef.current.clientWidth < eventRef.current.scrollWidth) {
-  //   //   console.log(details.event_name + "has overflow");
-
-  //   // }
-  //   console.log(eventRef);
-
-  // }, [eventRef]);
+function Event({details, settings, handleClick}) {
 
 
     let startTimeValue = details.start_time.getHours() +(details.start_time.getMinutes() /60);
@@ -47,7 +45,8 @@ function Event({details, settings, deleteEvent, handleClick}) {
       
         <EventStyle  onClick={ e => handleClick(e, details)} details={details} startTimeValue = {startTimeValue} endTimeValue = {endTimeValue} length = {length} startHour = {settings.startHour}>
 
-            <Label className={classes.color}>{details.event_name}</Label>
+            <p className={classes.label}>{details.event_name}</p>
+
         </EventStyle>
     );
 }
@@ -60,33 +59,12 @@ const EventStyle = styled.div`
 
     display: flex;
     justify-content: center;
-
-   // margin-left: 1px;
-   //border: 1px solid black;
-   margin: 1px;
+    margin: 1px;
    
   
 `;
 
 
-const Label = styled.p`
-  margin: 0px;
-  padding-top: 4px;
-  //display: flex;
-  //justify-content: center;
-  //align-items: center;
-
-
-  font-size: 14px;
-  text-align: center;
-  width: 100%;
-  //height: 100%;
-
-  overflow: hidden;
-  //overflow-y: hidden
-  
-
-`;
 
 
 
