@@ -1,6 +1,5 @@
 //Shows
 
-//TODO: Pick actual color
 let sched4Color = "#39627e";
 
 let sched4Data = 
@@ -87,19 +86,6 @@ let sched4Data =
         color: sched4Color
       },
       
-      {
-        id: 157,
-        schedule_id: 4,
-        event_name: "Feature Film: Starfish",
-        speaker: "",
-        summary: "Open to the public ($5/free for pass-holder) Runtime - 1:41",
-        location: "RISD Metcalf Auditorium, Chace Center 20 N. Main St. 02903",
-        start_time: new Date(2019, 7, 23, 19, 45).toISOString(),
-        end_time: new Date(2019, 7, 23, 11, 45).toISOString(),
-        start_col: 0,
-        span: 0,
-        color: sched4Color
-      },
 
       {
         id: 158,
@@ -265,7 +251,7 @@ let sched4Data =
         summary: "",
         location: "",
         start_time: new Date(2019, 7, 25, 11, 30).toISOString(),
-        end_time: new Date(2019, 7, 24, 13, 0).toISOString(),
+        end_time: new Date(2019, 7, 25, 13, 0).toISOString(),
         start_col: 0,
         span: 0,
         color: sched4Color
@@ -279,7 +265,7 @@ let sched4Data =
         summary: "",
         location: "",
         start_time: new Date(2019, 7, 25, 13, 00).toISOString(),
-        end_time: new Date(2019, 7, 24, 14, 45).toISOString(),
+        end_time: new Date(2019, 7, 25, 14, 45).toISOString(),
         start_col: 0,
         span: 0,
         color: sched4Color
@@ -293,7 +279,7 @@ let sched4Data =
         summary: "",
         location: "",
         start_time: new Date(2019, 7, 25, 13, 30).toISOString(),
-        end_time: new Date(2019, 7, 24, 15, 30).toISOString(),
+        end_time: new Date(2019, 7, 25, 15, 30).toISOString(),
         start_col: 0,
         span: 0,
         color: sched4Color
@@ -307,7 +293,7 @@ let sched4Data =
         summary: "",
         location: "",
         start_time: new Date(2019, 7, 25, 15, 30).toISOString(),
-        end_time: new Date(2019, 7, 24, 16, 45).toISOString(),
+        end_time: new Date(2019, 7, 25, 16, 45).toISOString(),
         start_col: 0,
         span: 0,
         color: sched4Color
@@ -321,27 +307,14 @@ let sched4Data =
         summary: "",
         location: "",
         start_time: new Date(2019, 7, 25, 20, 0).toISOString(),
-        end_time: new Date(2019, 7, 24, 22, 0).toISOString(),
+        end_time: new Date(2019, 7, 25, 22, 0).toISOString(),
         start_col: 0,
         span: 0,
         color: sched4Color
       },
       
 
-      //Copy version
-      // {
-      //   id: ,
-      //   schedule_id: 4,
-      //   event_name: "",
-      //   speaker: "",
-      //   summary: "",
-      //   location: "",
-      //   start_time: new Date(2019, 7, 24, 14, 0).toISOString(),
-      //   end_time: new Date(2019, 7, 24, 16, 0).toISOString(),
-      //   start_col: 0,
-      //   span: 0,
-      //   color: sched4Color
-      // },
+
 ];
 
 module.exports = {sched4Data};
